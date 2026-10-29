@@ -14,6 +14,8 @@ The system uses **process names**, not file hashes, executable signatures, netwo
 
 The implementations also attempt to exchange denylist entries with other nodes on the local network. The Windows version adds encryption-at-rest support and several additional automation modules described below.
 
+> **Public documentation notice:** Installation locations, local artifact names, and task identifiers are intentionally omitted from this README. This does not remove those details from any source files or Git history. Do not treat obscured paths as a security boundary.
+
 > **Safety and accuracy notice:** This repository documents the original source. Neither script has been established as safe or functional in its uploaded form. Some uploaded text appears incomplete or syntactically inconsistent. Do not interpret the presence of a function or configuration value as proof that it runs successfully.
 
 ## Components at a glance
@@ -21,15 +23,15 @@ The implementations also attempt to exchange denylist entries with other nodes o
 | Capability | Linux source (`source.txt` / `head3.py` as displayed) | Windows source (`Windows.py`) |
 | --- | --- | --- |
 | Execution context | Root-level systemd service | Current-user scheduled task at logon |
-| Default installation | `/opt/monitor` | `~/AppData/Local/SysCore` |
-| Agent output | `auto_blacklist_daemon.py` | `core_agent.py` |
+| Installation paths | Redacted from public documentation | Redacted from public documentation |
+| Generated agent | Python runtime component | Python runtime component |
 | Process sampling | `psutil`, nominal 60-second windows | `psutil`, nominal 60-second windows |
 | Threshold cycle | `0.02 → 1.75 → 0.25` | `0.02 → 1.75 → 0.25` |
-| Denylist | Plain-text `blacklist.txt` | `back.end`, optionally Fernet-encrypted |
-| Allowlist | `whitelist.txt` | `whitelist.txt` |
+| Denylist | Plain-text local file | Local file, optionally Fernet-encrypted |
+| Allowlist | Local file | Local file |
 | Enforcement | SIGTERM then SIGKILL after grace period | `psutil.terminate()` then `kill()` after grace period |
 | Peer synchronization | HTTP `POST /sync`, TCP 8000 | HTTP `POST /sync`, TCP 8000 |
-| Logging | JSON-lines-style records in `/var/log/auto_blacklist.log` | JSON-lines-style records in `sys_audit.log` |
+| Logging | Local JSON-lines-style records | Local JSON-lines-style records |
 | Persistence | systemd unit; cron watchdog configuration is declared | Windows Task Scheduler `ONLOGON` |
 | Additional modules | LAN peer discovery | Clipboard execution watcher, CPU workload threads, .NET feature disabling |
 
@@ -37,14 +39,7 @@ The implementations also attempt to exchange denylist entries with other nodes o
 
 ### 1. Configuration and installation
 
-The Linux source defines installation and service locations, including:
-
-- `/opt/monitor/auto_blacklist_daemon.py` — generated runtime agent.
-- `/opt/monitor/blacklist.txt` — accumulated blocked process names.
-- `/opt/monitor/whitelist.txt` — process names exempt from enforcement.
-- `/var/log/auto_blacklist.log` — append-style JSON log.
-- `/etc/systemd/system/auto_blacklist.service` — intended systemd unit.
-- `/etc/cron.d/auto_blacklist_watchdog` — configured watchdog path.
+The Linux source defines local paths for its generated agent, denylist, allowlist, logs, systemd service, and optional watchdog configuration. Exact filesystem locations and artifact names are omitted from this public README.
 
 The generated systemd unit specifies `User=root`, `Restart=always`, and `RestartSec=5`. The installer checks for root privileges before attempting deployment. A cron-watchdog setting is enabled in the configuration, but the provided source does **not** establish that a complete watchdog installation was implemented.
 
@@ -70,13 +65,13 @@ This is a cooperative denylist exchange mechanism, **not an authenticated cluste
 
 ### 1. User-context deployment
 
-`Windows.py` targets a per-user directory under `AppData/Local/SysCore`, writes a generated `core_agent.py`, and attempts to register a Windows Scheduled Task named `SysCoreUserAgent` that runs at user logon.
+`Windows.py` targets a per-user application directory, generates a Python agent, and attempts to register a Windows Scheduled Task that runs at user logon. Exact locations and task identifiers are omitted from this public README.
 
 The script selects a Python interpreter from the environment and creates paths for the agent, log, denylist, allowlist, and encryption key.
 
 ### 2. Denylist storage and encryption
 
-The Windows agent uses a file named `back.end` as its denylist. It attempts to use Fernet authenticated encryption when the `cryptography` package is available; otherwise it can write plaintext. The key is provisioned in a separate local `.key` file.
+The Windows agent uses a local file as its denylist. It attempts to use Fernet authenticated encryption when the `cryptography` package is available; otherwise it can write plaintext. The key is provisioned in a separate local file.
 
 This provides a potential encryption-at-rest mechanism but is **not equivalent to secure key management**: the key resides alongside the application data, and plaintext fallback is possible.
 
@@ -88,11 +83,11 @@ It also hardcodes names of Windows administrative utilities, including `cmd.exe`
 
 ### 4. Peer synchronization
 
-Like the Linux variant, the Windows agent discovers local IPv4 peers and exchanges denylist entries through an unauthenticated HTTP endpoint on port 8000. The encryption used for the local `back.end` file does **not** protect the network transport or authenticate peers.
+Like the Linux variant, the Windows agent discovers local IPv4 peers and exchanges denylist entries through an unauthenticated HTTP endpoint on port 8000. The encryption used for the local denylist file does **not** protect the network transport or authenticate peers.
 
 ### 5. Clipboard-triggered execution
 
-A background function polls the Windows clipboard through PowerShell. When clipboard content changes and contains specific BCI and agent-name markers, the function writes that text to `auto_extracted.py` and launches it as a detached Python process.
+A background function polls the Windows clipboard through PowerShell. When clipboard content changes and contains specific BCI and agent-name markers, the function writes that text to a local Python file and launches it as a detached process.
 
 This is **automatic execution of clipboard-derived code**, not passive clipboard auditing. Clipboard contents are untrusted input; executing them creates a serious code-execution risk.
 
