@@ -25,8 +25,8 @@ LOCAL_APPDATA = os.path.join(USER_HOME, "AppData", "Local", "SysCore")
 CONFIG = {
     "INSTALL_DIR": LOCAL_APPDATA,
     "SCRIPT_NAME": "core_agent.py",
-    "LOG_PATH": os.path.join(LOCAL_APPDATA, "sys_audit.log"),
-    "SERVICE_NAME": "SysCoreUserAgent",
+    "LOG_PATH": REDACTED),
+    "SERVICE_NAME": REDACTED",
     
     # Denylist and Key Paths
     "BLACKLIST_PATH": os.path.join(LOCAL_APPDATA, "back.end"),
